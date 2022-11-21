@@ -7,6 +7,7 @@ import os
 from dotenv import dotenv_values, find_dotenv, load_dotenv
 import flask
 
+import api
 import models
 from spaces import upload_file, get_file_url, download_file
 
@@ -15,10 +16,7 @@ def _get_env():
     return os.getenv('CHOSEN_ENV')
 
 
-_ENV_FILE_NAMES = {
-    'PROD': '.env',
-    'DEV': '.env.dev'
-}
+_ENV_FILE_NAMES = {'PROD': '.env', 'DEV': '.env.dev'}
 
 
 class EnvNames:
@@ -32,9 +30,7 @@ if _get_env() == EnvNames.PROD:
 
 load_dotenv(find_dotenv(_ENV_FILE_NAMES[_get_env()]))
 
-_env = {
-    **dotenv_values(find_dotenv(_ENV_FILE_NAMES[_get_env()]))
-}
+_env = {**dotenv_values(find_dotenv(_ENV_FILE_NAMES[_get_env()]))}
 
 
 def create_app():
@@ -55,15 +51,9 @@ def create_app():
 
 
 app = create_app()
+app.register_blueprint(api.routes)
 
 
 @app.route('/')
 def index():
     return app.send_static_file('index.html')
-
-@app.route('/add')
-def add():
-    u = models.User.get_meals(1)
-    # m = models.Meal.create_fake_meal()
-    # print(u, m)
-    return {'user': u}, 200
