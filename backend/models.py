@@ -1,3 +1,4 @@
+import enum
 from typing import Mapping, Union
 
 from sqlalchemy import ForeignKey
@@ -5,10 +6,16 @@ from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 from flask_sqlalchemy import SQLAlchemy
 
-import model_types
+# import model_types
 
 
 db = SQLAlchemy()
+
+
+class ResultMessage(enum.Enum):
+    USER_ALREADY_EXISTS = 'User already exists!'
+    LOGIN_FAILED = 'Unexpected exception raised. Could not login or sign up'
+    LOGIN_SUCCESS = 'Login success!'
 
 
 class Meal(db.Model):
@@ -63,10 +70,21 @@ class User(db.Model):
     username = db.Column(db.Text, nullable=False)
     meals = relationship("Meal", order_by=Meal.id, back_populates="user")
 
+    def save(self) -> tuple:
+        try:
+            user_data = self.find_user_by_name(self.username)
+            if user_data is not None:
+                return ResultMessage.USER_ALREADY_EXISTS, False
+            db.session.add(self)
+            db.session.commit()
+            return ResultMessage.LOGIN_SUCCESS, True
+        except Exception:
+            return ResultMessage.LOGIN_FAILED, False
+
     @classmethod
     def save_meal(cls, user_id: int, data: Mapping[str, Union[str, int]]):
         try:
-            current_user = cls.find_user(user_id)
+            current_user = cls.find_user_by_id(user_id)
             current_user.meals.append(Meal(**data['meal']))
             db.session.add(current_user)
             db.session.commit()
@@ -85,8 +103,12 @@ class User(db.Model):
             return False
 
     @classmethod
-    def find_user(cls, user_id: int) -> 'User':
+    def find_user_by_id(cls, user_id: int) -> 'User':
         return cls.query.filter(cls.id == user_id).first()
+
+    @classmethod
+    def find_user_by_name(cls, username: str) -> 'User':
+        return cls.query.filter(cls.username == username).first()
 
     @classmethod
     def get_meals(cls, user_id: int) -> dict:
@@ -96,7 +118,7 @@ class User(db.Model):
             'id': meal.id,
             'meal_type': meal.meal_type,
             'protein': meal.protein
-        } for meal in cls.find_user(user_id).meals]
+        } for meal in cls.find_user_by_id(user_id).meals]
     
     @classmethod
     def find_meal(cls, user_id, meal_id: int) -> 'Meal':
