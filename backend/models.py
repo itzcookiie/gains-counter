@@ -22,6 +22,7 @@ class Meal(db.Model):
     __tablename__ = "meals"
     id = db.Column(db.Integer, primary_key=True)
     meal_type = db.Column(db.Text, nullable=False)
+    meal_name = db.Column(db.Text, nullable=False)
     calories = db.Column(db.Integer, nullable=False)
     protein = db.Column(db.Integer, nullable=False)
     user_id = db.Column(db.Integer, ForeignKey("user.id"))
@@ -36,6 +37,7 @@ class Meal(db.Model):
             'created_at': meal.created_at,
             'id': meal.id,
             'meal_type': meal.meal_type,
+            'meal_name': meal.meal_name,
             'protein': meal.protein
         } for meal in cls.query.all()]
 
@@ -85,7 +87,9 @@ class User(db.Model):
     def save_meal(cls, user_id: int, data: Mapping[str, Union[str, int]]):
         try:
             current_user = cls.find_user_by_id(user_id)
-            current_user.meals.append(Meal(**data['meal']))
+            m = Meal(**data['meal'])
+            current_user.meals.append(m)
+            print(m)
             db.session.add(current_user)
             db.session.commit()
             return True
@@ -117,6 +121,7 @@ class User(db.Model):
             'created_at': meal.created_at,
             'id': meal.id,
             'meal_type': meal.meal_type,
+            'meal_name': meal.meal_name,
             'protein': meal.protein
         } for meal in cls.find_user_by_id(user_id).meals]
     
