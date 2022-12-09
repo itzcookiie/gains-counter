@@ -9,7 +9,6 @@ app = server_app.create_app()
 
 models.db.init_app(app)
 with app.app_context():
-    models.db.create_all()
 
     try:
         models.Meal.__table__.drop(models.db.engine)
@@ -17,8 +16,10 @@ with app.app_context():
     except (sqlalchemy.exc.ProgrammingError, MySQLdb.ProgrammingError):
         pass
 
-    u1 = models.User(username='Bob')
-    u2 = models.User(username='Ant')
+    models.db.create_all()
+    
+    u1 = models.User(email='Bob@mail.com')
+    u2 = models.User(email='Ant@mail.com')
 
     m1 = models.Meal(meal_name="Cereal", meal_type='Food', calories=100, protein=100, user=u1)
     m2 = models.Meal(meal_name="Cereal", meal_type='Drink', calories=300, protein=10, user=u1)
@@ -31,5 +32,6 @@ with app.app_context():
 
     models.db.session.add_all([u1, u2])
     models.db.session.add_all([m1, m2, m3, m4, m5, m6, m7, m8])
-
     models.db.session.commit()
+    
+    print('DB seeded successfully!')

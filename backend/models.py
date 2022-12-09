@@ -69,19 +69,25 @@ class Meal(db.Model):
 class User(db.Model):
     # __tablename__ = "users"
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.Text, nullable=False)
+    email = db.Column(db.Text, nullable=False)
     meals = relationship("Meal", order_by=Meal.id, back_populates="user")
 
     def save(self) -> tuple:
         try:
-            user_data = self.find_user_by_name(self.username)
+            user_data = self.find_user_by_name(self.email)
             if user_data is not None:
-                return ResultMessage.USER_ALREADY_EXISTS, False
+                return user_data.get_user_data(), ResultMessage.USER_ALREADY_EXISTS, True
             db.session.add(self)
             db.session.commit()
-            return ResultMessage.LOGIN_SUCCESS, True
+            return user_data.get_user_data(), ResultMessage.LOGIN_SUCCESS, True
         except Exception:
-            return ResultMessage.LOGIN_FAILED, False
+            return user_data.get_user_data(), ResultMessage.LOGIN_FAILED, False
+
+    def get_user_data(self) -> dict:
+        return {
+            'id': self.id,
+            'email': self.email
+        }
 
     @classmethod
     def save_meal(cls, user_id: int, data: Mapping[str, Union[str, int]]):
@@ -111,8 +117,8 @@ class User(db.Model):
         return cls.query.filter(cls.id == user_id).first()
 
     @classmethod
-    def find_user_by_name(cls, username: str) -> 'User':
-        return cls.query.filter(cls.username == username).first()
+    def find_user_by_name(cls, email: str) -> 'User':
+        return cls.query.filter(cls.email == email).first()
 
     @classmethod
     def get_meals(cls, user_id: int) -> dict:
