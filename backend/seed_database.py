@@ -18,8 +18,8 @@ with app.app_context():
 
     models.db.create_all()
     
-    u1 = models.User(email='Bob@mail.com')
-    u2 = models.User(email='Ant@mail.com')
+    u1 = models.User(email='Bob@mail.com', daily_protein_goal=100, daily_calorie_goal=2000)
+    u2 = models.User(email='Ant@mail.com', daily_calorie_goal=2500, daily_protein_goal=80)
 
     m1 = models.Meal(meal_name="Cereal", meal_type='Food', calories=100, protein=100, user=u1)
     m2 = models.Meal(meal_name="Cereal", meal_type='Drink', calories=300, protein=10, user=u1)
